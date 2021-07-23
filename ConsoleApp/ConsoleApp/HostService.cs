@@ -1,31 +1,34 @@
 ﻿using System;
-using System.Collections.Generic;
+using ConsoleApp.Services;
 using Microsoft.Extensions.Logging;
 
 namespace ConsoleApp
 {
-    class HostService
+    class HostService : IService
     {
         private readonly ILogger<HostService> _logger;
-        
-        public HostService(
-            IService service,
-            IEnumerable<IService> services,
-            ILogger<HostService> logger
-            )
+        private readonly IVkAuthorizeService _vkAuthorizeService;
+        private readonly IVkFriendsService _vkFriendsService;
+
+        public HostService(ILogger<HostService> logger, IVkAuthorizeService vkAuthorizeService,
+            IVkFriendsService vkFriendsService)
         {
             _logger = logger;
-            
-            if (service is IAuthorizeService authorize)
+            _vkAuthorizeService = vkAuthorizeService;
+            _vkFriendsService = vkFriendsService;
+
+            Run();
+        }
+
+        private void Run()
+        {
+            try
             {
-                try
-                {
-                    authorize.Authorize();
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, e.Message);
-                }
+                _vkAuthorizeService.Authorize();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, e.Message);
             }
         }
     }

@@ -1,6 +1,6 @@
 ﻿namespace ConsoleApp
 {
-    interface IService
+    public interface IService
     {
     }
 }

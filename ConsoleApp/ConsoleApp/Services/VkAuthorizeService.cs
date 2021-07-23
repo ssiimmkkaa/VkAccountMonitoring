@@ -1,25 +1,26 @@
 ﻿using System;
+using System.Collections.Generic;
+using ConsoleApp.Exceptions.AuthorizeExceptions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
 using VkNet;
 using VkNet.Model;
 
-namespace ConsoleApp
+namespace ConsoleApp.Services
 {
-    class VkAuthorize : IAuthorizeService
+    class VkAuthorizeService : IVkAuthorizeService
     {
         private readonly HostBuilderContext _hostBuilderContext;
         private readonly IOptions<VkAuthorizeData> _vkAuthorizeDataOptions;
         private readonly IOptions<ApplicationId> _applicationIdOptions;
-        private readonly ILogger<IAuthorizeService> _logger;
+        private readonly ILogger<IVkAuthorizeService> _logger;
 
-        public VkAuthorize(
+        public VkAuthorizeService(
             HostBuilderContext hostBuilderContext,
             IOptions<ApplicationId> applicationIdOptions,
             IOptions<VkAuthorizeData> vkAuthorizeDataOptions,
-            ILogger<IAuthorizeService> logger
+            ILogger<VkAuthorizeService> logger
         )
         {
             _hostBuilderContext = hostBuilderContext;
@@ -45,14 +46,31 @@ namespace ConsoleApp
             catch (Exception e)
             {
                 _logger.LogError(e, e.Message);
-                throw (e);
+                throw;
             }
 
             var user = api.Account.GetProfileInfo();
             _logger.LogInformation(
                 $"User {api.UserId} \'{user.FirstName} {user.LastName}\' is logged in. Access token: {api.Token}");
 
-            _hostBuilderContext.Properties.Add(new KeyValuePair<object, object>("Api", api.Token));
+            _hostBuilderContext.Properties.Add(new KeyValuePair<object, object>("Api", api));
+        }
+
+        public VkApi EnsureUserAuthorized(long userId)
+        {
+            if (!_hostBuilderContext.Properties.ContainsKey("Api"))
+            {
+                throw new UserNotAuthorizedException();
+            }
+
+            VkApi api = (VkApi) _hostBuilderContext.Properties["Api"];
+
+            if (api.UserId != userId)
+            {
+                throw new UserNotAuthorizedException(userId.ToString());
+            }
+
+            return api;
         }
     }
 }

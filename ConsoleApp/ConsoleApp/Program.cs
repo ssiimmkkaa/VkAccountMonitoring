@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using ConsoleApp.Services;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 
@@ -10,7 +11,7 @@ namespace ConsoleApp
         {
             using IHost host = CreateHostBuilder(args).Build();
 
-            _ = host.Services.GetService<HostService>();
+            var service = host.Services.GetService<HostService>();
 
             host.Run();
         }
@@ -35,8 +36,9 @@ namespace ConsoleApp
                         .Configure<ApplicationId>(configurationRoot.GetSection(nameof(ApplicationId)));
 
                     services
-                        .AddSingleton<IService, VkAuthorize>()
-                        .AddSingleton<HostService>();
+                        .AddScoped<IVkAuthorizeService, VkAuthorizeService>()
+                        .AddScoped<IVkFriendsService, VkFriendsService>()
+                        .AddScoped<HostService>();
                 });
     }
 }
